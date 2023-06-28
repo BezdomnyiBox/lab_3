@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Лабораторная работа №2</title>
+  <link rel="stylesheet" href="main.css">
+  <script src="http://d3js.org/d3.v7.min.js"> </script>
+</head>
+
+<body onload="drawGraph(this.form)">
+  <nav>
+    <div><a href="Laba_3.html" class="big_text">
+       САМЫЕ СИЛЬНЫЕ ФУТБОЛИСТЫ
+    </a></div>
+
+    <div><a href="Laba_3_2.html" class="big_text">
+       СПИСОК САМЫХ СИЛЬНЫХ ФУТБОЛИСТОВ
+    </a></div>
+ </nav>
+
+  <details>
+    <summary> График </summary>
+    <form>
+      <table id="Grafik">
+        <tr>
+          <th>Значениe по оси OX</th>
+          <th>Результат</th>
+        </tr>
+        <tr>
+          <td>
+            <input type="radio" name="ox" value="rating" checked>Рейтинг<br>
+            <input type="radio" name="ox" value="height">Рост<br>
+            <input type="radio" name="ox" value="birthYear">Год рождения<br>
+          </td>
+          <td>
+            <input type="checkbox" name="oy" value="0" checked disabled>Количество игроков<br>
+          </td>
+        </tr>
+      </table>
+      <input type=button value="Построить" onclick="drawGraph(this.form)">
+      <div>
+        <svg height="5">
+        </svg>
+      </div>
+    </form>
+  </details>
+  <details>
+    <summary> Фильтр</summary>
+    <form>
+      <p>
+        <label for="nameFilter">Имя:</label>
+        <input type="text" id="nameFilter" placeholder="Введите имя" onchange="filterTable()">
+      </p>
+      <p>
+        <label for="positionFilter">Амплуа:</label>
+        <input type="text" id="positionFilter" placeholder="Введите амплуа" onchange="filterTable()">
+      </p>
+      <p>
+        <label for="nationalityFilter">Национальность:</label>
+        <input type="text" id="nationalityFilter" placeholder="Введите национальность" onchange="filterTable()">
+      </p>
+      <p>
+        <label for="clubFilter">Клуб:</label>
+        <input type="text" id="clubFilter" placeholder="Введите название клуба" onchange="filterTable()">
+      </p>
+      <p>
+        <label for="birthYearFrom">Год рождения: от</label>
+        <input type="text" id="birthYearFrom" min="1900" max="2023" placeholder="Введите год" onchange="filterTable()">
+        <label for="birthYearTo">до</label>
+        <input type="text" id="birthYearTo" min="1900" max="2023" placeholder="Введите год" onchange="filterTable()">
+      </p>
+      <p>
+        <label for="heightFrom">Рост: от</label>
+        <input type="text" id="heightFrom" min="0" max="300" placeholder="Введите рост, см" onchange="filterTable()">
+        <label for="heightTo">до</label>
+        <input type="text" id="heightTo" min="0" max="300" placeholder="Введите рост, см" onchange="filterTable()">
+      </p>
+      <p>
+        <label for="ratingFrom">Рейтинг: от</label>
+        <input type="text" id="ratingFrom" min="0" max="100" placeholder="Введите рейтинг" onchange="filterTable()">
+        <label for="ratingTo">до</label>
+        <input type="text" id="ratingTo" min="0" max="100" placeholder="Введите рейтинг" onchange="filterTable()">
+      </p>
+
+      <button onclick="filterTable()">Применить фильтр</button>
+
+    </form>
+  </details>
+  <details>
+    <summary>Сортировка</summary>
+    <form>
+      <p>
+        Первый уровень:
+        <select id="sortFirst" onchange="handleLevelChange1()">
+          <option value="none">Нет</option>
+          <option value="name">Имя</option>
+          <option value="position">Амплуа</option>
+          <option value="nationality">Национальность</option>
+          <option value="club">Клуб</option>
+          <option value="birthYear">Год рождения</option>
+          <option value="height">Рост</option>
+          <option value="rating">Рейтинг</option>
+
+        </select>
+        по убыванию? <input type="checkbox" id="descFirst">
+      </p>
+      <p>
+        Второй уровень:
+        <select id="sortSecond" disabled onchange="handleLevelChange2()">
+          <option value="none">Нет</option>
+          <option value="name">Имя</option>
+          <option value="position">Амплуа</option>
+          <option value="nationality">Национальность</option>
+          <option value="club">Клуб</option>
+          <option value="birthYear">Год рождения</option>
+          <option value="height">Рост</option>
+          <option value="rating">Рейтинг</option>
+
+        </select>
+        по убыванию? <input type="checkbox" id="descSecond">
+      </p>
+      <p>
+        Третий уровень:
+        <select id="sortThird" disabled>
+          <option value="none">Нет</option>
+          <option value="name">Имя</option>
+          <option value="position">Амплуа</option>
+          <option value="nationality">Национальность</option>
+          <option value="club">Клуб</option>
+          <option value="birthYear">Год рождения</option>
+          <option value="height">Рост</option>
+          <option value="rating">Рейтинг</option>
+
+        </select>
+        по убыванию? <input type="checkbox" id="descThird">
+      </p>
+      <input type=button value="Сортировать" onclick="sortData()">
+    </form>
+  </details>
+  <br>
+  <div class="tableHTML">
+    <table id="main_table" cellspacing="0" cellpadding="5">
+      <tr>
+        <th>Имя</th>
+        <th>Амплуа</th>
+        <th>Национальность</th>
+        <th>Клуб</th>
+        <th>Год рождения</th>
+        <th>Рост, см</th>
+        <th>Рейтинг</td>
+      </tr>
+
+      <tr>
+        <td>Месси</td>
+        <td>Правый вингер</td>
+        <td>Аргентина</td>
+        <td>ПСЖ</td>
+        <td>1987</td>
+        <td>169</td>
+        <td>93</td>
+      </tr>
+      <tr>
+        <td>Неймар</td>
+        <td>Левый вингер</td>
+        <td>Бразилия</td>
+        <td>ПСЖ</td>
+        <td>1992</td>
+        <td>174</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Роналду</td>
+        <td>Нападающий</td>
+        <td>Португалия</td>
+        <td>Манчестер Юнайтед</td>
+        <td>1985</td>
+        <td>186</td>
+        <td>90</td>
+      </tr>
+      <tr>
+        <td>Холанд</td>
+        <td>Нападающий</td>
+        <td>Норвегия</td>
+        <td>Манчестер Сити</td>
+        <td>1999</td>
+        <td>200</td>
+        <td>88</td>
+      </tr>
+      <tr>
+        <td>Мбаппе</td>
+        <td>Нападающий</td>
+        <td>Франция</td>
+        <td>ПСЖ</td>
+        <td>1998</td>
+        <td>180</td>
+        <td>92</td>
+      </tr>
+      <tr>
+        <td>Зидан</td>
+        <td>Атакующий полузащитник</td>
+        <td>Франция</td>
+        <td>Реал Мадрид</td>
+        <td>1970</td>
+        <td>185</td>
+        <td>94</td>
+      </tr>
+      <tr>
+        <td>Марадона</td>
+        <td>Атакующий полузащитник</td>
+        <td>Аргентина</td>
+        <td>Наполи</td>
+        <td>1960</td>
+        <td>165</td>
+        <td>95</td>
+      </tr>
+      <tr>
+        <td>Пеле</td>
+        <td>Нападающий</td>
+        <td>Бразилия</td>
+        <td>Сантос</td>
+        <td>1948</td>
+        <td>175</td>
+        <td>95</td>
+      </tr>
+      <tr>
+        <td>Буффон Джанлуиджи</td>
+        <td>Вратарь</td>
+        <td>Италия</td>
+        <td>Ювентус</td>
+        <td>1981</td>
+        <td>189</td>
+        <td>87</td>
+      </tr>
+      <tr>
+        <td>Иньеста Андрес</td>
+        <td>Полузащитник</td>
+        <td>Испания</td>
+        <td>Барселона</td>
+        <td>1986</td>
+        <td>170</td>
+        <td>92</td>
+      </tr>
+      <tr>
+        <td>Касильяс Икер</td>
+        <td>Вратарь</td>
+        <td>Испания</td>
+        <td>Реал Мадрид</td>
+        <td>1983</td>
+        <td>185</td>
+        <td>90</td>
+      </tr>
+      <tr>
+        <td>Кьеллини Джорджо</td>
+        <td>Защитник</td>
+        <td>Италия</td>
+        <td>Ювентус</td>
+        <td>1983</td>
+        <td>190</td>
+        <td>88</td>
+      </tr>
+      <tr>
+        <td>Джеррард Стивен</td>
+        <td>Полузащитник</td>
+        <td>Англия</td>
+        <td>Ливерпуль</td>
+        <td>1982</td>
+        <td>184</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Видаль Артуро</td>
+        <td>Полузащитник</td>
+        <td>Чили</td>
+        <td>Ювентус</td>
+        <td>1988</td>
+        <td>185</td>
+        <td>85</td>
+      </tr>
+      <tr>
+        <td>Суарес Луис</td>
+        <td>Нападающий</td>
+        <td>Уругвай</td>
+        <td>Барселона</td>
+        <td>1987</td>
+        <td>183</td>
+        <td>91</td>
+      </tr>
+      <tr>
+        <td>Маркизио Клаудио</td>
+        <td>Защитник</td>
+        <td>Италия</td>
+        <td>Ювентус</td>
+        <td>1982</td>
+        <td>185</td>
+        <td>83</td>
+      </tr>
+      <tr>
+        <td>Лэмпард Фрэнк</td>
+        <td>Полузащитник</td>
+        <td>Англия</td>
+        <td>Челси</td>
+        <td>1982</td>
+        <td>182</td>
+        <td>88</td>
+      </tr>
+      <tr>
+        <td>Руни Уэйн</td>
+        <td>Нападающий</td>
+        <td>Англия</td>
+        <td>Манчестер Юнайтед</td>
+        <td>1985</td>
+        <td>184</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Хави Эрнандес</td>
+        <td>Полузащитник</td>
+        <td>Испания</td>
+        <td>Барселона</td>
+        <td>1981</td>
+        <td>170</td>
+        <td>90</td>
+      </tr>
+      <tr>
+        <td>Тотти Франческо</td>
+        <td>Полузащитник</td>
+        <td>Италия</td>
+        <td>Рома</td>
+        <td>1982</td>
+        <td>179</td>
+        <td>88</td>
+      </tr>
+      <tr>
+        <td>Ибрагимович Златан</td>
+        <td>Нападающий</td>
+        <td>Швеция</td>
+        <td>ПСЖ</td>
+        <td>1982</td>
+        <td>195</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Ройс Марко</td>
+        <td>Полузащитник</td>
+        <td>Германия</td>
+        <td>Боруссия Дортмунд</td>
+        <td>1992</td>
+        <td>181</td>
+        <td>87</td>
+      </tr>
+      <tr>
+        <td>Ван Перси Робин</td>
+        <td>Нападающий</td>
+        <td>Нидерланды</td>
+        <td>Манчестер Юнайтед</td>
+        <td>1986</td>
+        <td>185</td>
+        <td>87</td>
+      </tr>
+      <tr>
+        <td>Бэйл Гарет</td>
+        <td>Нападающий</td>
+        <td>Уэльс</td>
+        <td>Тоттенхем</td>
+        <td>1992</td>
+        <td>185</td>
+        <td>86</td>
+      </tr>
+      <tr>
+        <td>Гиггз Райан</td>
+        <td>Нападающий</td>
+        <td>Уэльс</td>
+        <td>Манчестер Юнайтед</td>
+        <td>1978</td>
+        <td>185</td>
+        <td>86</td>
+      </tr>
+      <tr>
+        <td>Пуйоль Карлес</td>
+        <td>Защитник</td>
+        <td>Испания</td>
+        <td>Барселона</td>
+        <td>1981</td>
+        <td>185</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Скоулз Пол</td>
+        <td>Полузащитник</td>
+        <td>Англия</td>
+        <td>Манчестер Юнайтед</td>
+        <td>1979</td>
+        <td>175</td>
+        <td>90</td>
+      </tr>
+      <tr>
+        <td>Терри Джон</td>
+        <td>Защитник</td>
+        <td>Англия</td>
+        <td>Челси</td>
+        <td>1983</td>
+        <td>185</td>
+        <td>88</td>
+      </tr>
+      <tr>
+        <td>Мюллер Томас</td>
+        <td>Полузащитник</td>
+        <td>Германия</td>
+        <td>Бавария</td>
+        <td>1987</td>
+        <td>185</td>
+        <td>87</td>
+      </tr>
+      <tr>
+        <td>Вилья Давид</td>
+        <td>Нападающий</td>
+        <td>Испания</td>
+        <td>Барселона</td>
+        <td>1985</td>
+        <td>175</td>
+        <td>88</td>
+      </tr>
+      <tr>
+        <td>Уилшер Джек</td>
+        <td>Полузащитник</td>
+        <td>Англия</td>
+        <td>Арсенал</td>
+        <td>1992</td>
+        <td>170</td>
+        <td>81</td>
+      </tr>
+      <tr>
+        <td>Торрес Фернандо</td>
+        <td>Нападающий</td>
+        <td>Испания</td>
+        <td>Челси</td>
+        <td>1982</td>
+        <td>185</td>
+        <td>86</td>
+      </tr>
+      <tr>
+        <td>Азар Эден</td>
+        <td>Полузащитник</td>
+        <td>Бельгия</td>
+        <td>Челси</td>
+        <td>1992</td>
+        <td>172</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Эль-Шаарави Стефан</td>
+        <td>Полузащитник</td>
+        <td>Италия</td>
+        <td>Рома</td>
+        <td>1992</td>
+        <td>175</td>
+        <td>78</td>
+      </tr>
+      <tr>
+        <td>Мата Хуан</td>
+        <td>Полузащитник</td>
+        <td>Испания</td>
+        <td>Челси</td>
+        <td>1987</td>
+        <td>175</td>
+        <td>86</td>
+      </tr>
+      <tr>
+        <td>Фалькао Радамель</td>
+        <td>Нападающий</td>
+        <td>Колумбия</td>
+        <td>Челси</td>
+        <td>1987</td>
+        <td>175</td>
+        <td>87</td>
+      </tr>
+      <tr>
+        <td>Де Росси Даниэле</td>
+        <td>Полузащитник</td>
+        <td>Италия</td>
+        <td>Рома</td>
+        <td>1983</td>
+        <td>185</td>
+        <td>85</td>
+      </tr>
+      <tr>
+        <td>Квальярелла Фабио</td>
+        <td>Нападающий</td>
+        <td>Италия</td>
+        <td>Ювентус</td>
+        <td>1984</td>
+        <td>185</td>
+        <td>83</td>
+      </tr>
+      <tr>
+        <td>Чех Петр</td>
+        <td>Вратарь</td>
+        <td>Чехия</td>
+        <td>Челси</td>
+        <td>1983</td>
+        <td>194</td>
+        <td>90</td>
+      </tr>
+      <tr>
+        <td>Де Хеа Давид</td>
+        <td>Нападающий</td>
+        <td>Испания</td>
+        <td>Манчестер Юнайтед</td>
+        <td>1993</td>
+        <td>175</td>
+        <td>87</td>
+      </tr>
+      <tr>
+        <td>Чичарито</td>
+        <td>Нападающий</td>
+        <td>Мексика</td>
+        <td>Манчестер Юнайтед</td>
+        <td>1989</td>
+        <td>185</td>
+        <td>82</td>
+      </tr>
+      <tr>
+        <td>Швайнштайгер Бастиан</td>
+        <td>Полузащитник</td>
+        <td>Германия</td>
+        <td>Бавария</td>
+        <td>1985</td>
+        <td>175</td>
+        <td>88</td>
+      </tr>
+      <tr>
+        <td>Рибери Франк</td>
+        <td>Полузащитник</td>
+        <td>Франция</td>
+        <td>Бавария</td>
+        <td>1983</td>
+        <td>175</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Дзанетти Хавьер</td>
+        <td>Правый защитник</td>
+        <td>Аргентина</td>
+        <td>Интер</td>
+        <td>1983</td>
+        <td>185</td>
+        <td>86</td>
+      </tr>
+      <tr>
+        <td>Рамос Серхио</td>
+        <td>Защитник</td>
+        <td>Испания</td>
+        <td>Реал Мадрид</td>
+        <td>1987</td>
+        <td>185</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Акинфеев Игорь</td>
+        <td>Вратарь</td>
+        <td>Россия</td>
+        <td>ЦСКА</td>
+        <td>1987</td>
+        <td>186</td>
+        <td>83</td>
+      </tr>
+      <tr>
+        <td>Гётце Марио</td>
+        <td>Нападающий</td>
+        <td>Германия</td>
+        <td>Бавария</td>
+        <td>1992</td>
+        <td>170</td>
+        <td>82</td>
+      </tr>
+      <tr>
+        <td>Уолкотт Тео</td>
+        <td>Нападающий</td>
+        <td>Англия</td>
+        <td>Арсенал</td>
+        <td>1990</td>
+        <td>175</td>
+        <td>80</td>
+      </tr>
+      <tr>
+        <td>Снейдер Уэсли</td>
+        <td>Полузащитник</td>
+        <td>Нидерланды</td>
+        <td>Интер</td>
+        <td>1983</td>
+        <td>180</td>
+        <td>87</td>
+      </tr>
+      <tr>
+        <td>Альба Жорди</td>
+        <td>Левый защитник</td>
+        <td>Испания</td>
+        <td>Барселона</td>
+        <td>1990</td>
+        <td>170</td>
+        <td>85</td>
+      </tr>
+      <tr>
+        <td>Хуммельс Матс</td>
+        <td>Защитник</td>
+        <td>Германия</td>
+        <td>Бавария</td>
+        <td>1987</td>
+        <td>190</td>
+        <td>88</td>
+      </tr>
+      <tr>
+        <td>Левандовски Роберт</td>
+        <td>Нападающий</td>
+        <td>Польша</td>
+        <td>Бавария</td>
+        <td>1987</td>
+        <td>185</td>
+        <td>90</td>
+      </tr>
+      <tr>
+        <td>Кокорин Александр</td>
+        <td>Нападающий</td>
+        <td>Россия</td>
+        <td>Зенит</td>
+        <td>1990</td>
+        <td>178</td>
+        <td>77</td>
+      </tr>
+      <tr>
+        <td>Лам Филипп</td>
+        <td>Правый защитник</td>
+        <td>Германия</td>
+        <td>Бавария</td>
+        <td>1987</td>
+        <td>175</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Вермален Томас</td>
+        <td>Защитник</td>
+        <td>Бельгия</td>
+        <td>Барселона</td>
+        <td>1990</td>
+        <td>185</td>
+        <td>82</td>
+      </tr>
+    </table>
+  </div>
+  <script src="Main_js.js"></script>
+  <script>
+    // Логика сортировки таблицы
+    let table = document.getElementById("main_table");
+    let rows = table.rows;
+    let dataPlayer = [];
+
+    // Преобразование строк таблицы в массив объектов
+    for (let i = 1; i < rows.length; i++) { // Начинаем с 1, чтобы пропустить заголовок таблицы
+      let row = rows[i];
+      let rowData = {
+        name: row.cells[0].innerHTML,
+        position: row.cells[1].innerHTML,
+        nationality: row.cells[2].innerHTML,
+        club: row.cells[3].innerHTML,
+        birthYear: row.cells[4].innerHTML,
+        height: row.cells[5].innerHTML,
+        rating: row.cells[6].innerHTML
+      };
+      dataPlayer.push(rowData);
+    }
+
+
+    function getArrGraph(arrObject, fieldX) {
+
+      let groupObj = d3.group(arrObject, d => d[fieldX]);
+      arrGroup = []; // массив объектов для построения графика
+
+      for (let entry of groupObj) {
+        let elementGroup = {};
+        elementGroup.labelX = entry[0];
+        elementGroup.count = 0;
+        for (let i = 0; i < entry[1].length; i++) {
+          elementGroup.count++;
+        }
+        arrGroup.push(elementGroup);
+      }
+      arrGroup.sort((x, y) => x.labelX - y.labelX);
+      return arrGroup;
+    }
+
+
+    function drawGraph(data) {
+      let ox = document.getElementsByName("ox");
+      let value = '';
+      if (ox[0].checked) {
+        value = ox[0].value;
+      }
+      else if (ox[1].checked) {
+        value = ox[1].value;
+      }
+      else if (ox[2].checked) {
+        value = ox[2].value;
+      }
+
+
+      // формируем массив для построения диаграммы
+      let arrGraph = getArrGraph(dataPlayer, value)
+      let marginX = 50;
+      let marginY = 50;
+      let height = 400;
+      let width = 800;
+
+      let svg = d3.select("svg")
+        .attr("height", height)
+        .attr("width", width);
+
+      // очищаем svg перед построением
+      svg.selectAll("*").remove();
+      // определяем минимальное и максимальное значение по оси OY
+      let min = 0;
+      let max = d3.max(arrGraph.map(d => d.count)) * 1.05;
+      let xAxisLen = width - 2 * marginX;
+      let yAxisLen = height - 2 * marginY;
+
+      // определяем шкалы для осей
+      let scaleX = d3.scaleBand()
+        .domain(arrGraph.map(function (d) {
+          return d.labelX;
+        })
+        )
+        .range([0, xAxisLen], 1);
+
+      let scaleY = d3.scaleLinear()
+        .domain([min, max])
+        .range([yAxisLen, 0]);
+      // создаем оси
+      let axisX = d3.axisBottom(scaleX); // горизонтальная
+
+      let axisY = d3.axisLeft(scaleY);// вертикальная
+
+      // отображаем ось OX, устанавливаем подписи оси ОX и угол их наклона
+      svg.append("g")
+        .attr("transform", `translate(${marginX}, ${height - marginY})`)
+        .call(axisX)
+        .attr("class", "x-axis")
+        .selectAll("text")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", function (d) {
+          return "rotate(-45)";
+        });
+
+      // отображаем ось OY
+      svg.append("g")
+        .attr("transform", `translate(${marginX}, ${marginY})`)
+        .attr("class", "y-axis")
+        .call(axisY);
+
+      // создаем набор вертикальных линий для сетки
+      d3.selectAll("g.x-axis g.tick")
+        .append("line") // добавляем линию
+        .classed("grid-line", true) // добавляем класс
+        .attr("x1", 0)
+        .attr("y1", 0)
+        .attr("x2", 0)
+        .attr("y2", - (yAxisLen));
+
+      // создаем горизонтальные линии сетки
+      d3.selectAll("g.y-axis g.tick")
+        .append("line")
+        .classed("grid-line", true)
+        .attr("x1", 0)
+        .attr("y1", 0)
+        .attr("x2", xAxisLen)
+        .attr("y2", 0);
+
+
+
+      svg.selectAll(".dot")
+        .data(arrGraph)
+        .enter()
+        .append("circle")
+        .attr("r", 3)
+        .attr("cx", function (d) { return scaleX(d.labelX); })
+        .attr("cy", function (d) { return scaleY(d.count); })
+        .attr("transform",
+          `translate(${marginX + scaleX.bandwidth() / 2}, ${marginY})`)
+        .style("fill", "green");
+    }
+  </script>
+</body>
+
+</html>
